@@ -1,0 +1,5 @@
+EGS Research Suite.
+
+* Put the zone files you have in the priv/zones/ folder.
+* Compile: make
+* Run: ./start.sh
