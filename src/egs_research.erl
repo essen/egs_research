@@ -53,6 +53,9 @@ parse_zone_files(Out, Dir, [Filename = "script.bin"|Tail], Ptr) ->
 parse_zone_files(Out, Dir, [Filename = "set" ++ _|Tail], Ptr) ->
 	set_parser:parse(Out, lists:flatten([Dir|Filename]), Ptr),
 	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename]));
+parse_zone_files(Out, Dir, [Filename = "text.bin"|Tail], Ptr) ->
+	text_parser:parse(Out, lists:flatten([Dir|Filename]), Ptr),
+	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename]));
 parse_zone_files(Out, Dir, [Filename|Tail], Ptr) ->
 	io:format("zone: ignored file ~s from directory ~s~n", [Filename, Dir]),
 	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename])).
