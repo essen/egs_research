@@ -46,15 +46,11 @@ parse_zone_files(Out, Dir, NblFilenames) ->
 	parse_zone_files(Out, Dir, NblFilenames, 0).
 parse_zone_files(_Out, _Dir, [], _Ptr) ->
 	ok;
-parse_zone_files(Out, Dir, [Filename|Tail], Ptr) when Filename =:= "script.bin" ->
+parse_zone_files(Out, Dir, [Filename = "script.bin"|Tail], Ptr) ->
 	ExpFilename = exp_file([Dir|Filename]),
 	script_parser:parse(Out, ExpFilename),
 	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename]));
-parse_zone_files(Out, Dir, [Filename|Tail], Ptr)
-		when Filename =:= "set_r0.rel";
-			 Filename =:= "set_r1.rel";
-			 Filename =:= "set_r2.rel";
-			 Filename =:= "set_r3.rel" ->
+parse_zone_files(Out, Dir, [Filename = "set" ++ _|Tail], Ptr) ->
 	set_parser:parse(Out, lists:flatten([Dir|Filename]), Ptr),
 	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename]));
 parse_zone_files(Out, Dir, [Filename|Tail], Ptr) ->
