@@ -16,16 +16,16 @@
 #	You should have received a copy of the GNU Affero General Public License
 #	along with EGS Research.  If not, see <http://www.gnu.org/licenses/>.
 
-ERL ?= erl
+REBAR = rebar
 
 all: compile
 
 compile: deps
-	@./rebar compile
+	@$(REBAR) compile
 
 deps:
-	@./rebar get-deps
+	@$(REBAR) get-deps
 
 clean:
-	@./rebar clean
+	@$(REBAR) clean
 	rm -f erl_crash.dump
