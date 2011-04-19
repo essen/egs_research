@@ -46,6 +46,9 @@ parse_zone_files(Out, Dir, NblFilenames) ->
 	parse_zone_files(Out, Dir, NblFilenames, 0).
 parse_zone_files(_Out, _Dir, [], _Ptr) ->
 	ok;
+parse_zone_files(Out, Dir, [Filename = "enemy" ++ _|Tail], Ptr) ->
+	enemy_parser:parse(Out, lists:flatten([Dir|Filename]), Ptr),
+	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename]));
 parse_zone_files(Out, Dir, [Filename = "script.bin"|Tail], Ptr) ->
 	ExpFilename = exp_file([Dir|Filename]),
 	script_parser:parse(Out, ExpFilename),
