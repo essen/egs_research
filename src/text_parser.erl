@@ -20,4 +20,25 @@
 -export([parse/3]).
 
 parse(Out, Filename, BasePtr) ->
-	ok.
+	OutName = string:substr(Filename, 1 + string:rstr(Filename, "/")),
+	{ok, Data} = file:read_file(Filename),
+	<< Size:32/little, 8:32/little, 12:32/little, PosBin/bits >> = Data,
+	Size = byte_size(Data),
+	PosList = parse_pos(PosBin, Size, BasePtr, []),
+	Strings = parse_strings(Data, PosList, []),
+	file:write_file([Out, OutName, ".txt"], [<< 16#fffe:16 >>, Strings]).
+
+parse_pos(<< Pos:32/little, _Rest/bits >>, Size, BasePtr, Acc)
+		when Pos - BasePtr < 12; Pos - BasePtr > Size ->
+	lists:reverse(Acc);
+parse_pos(<< Pos:32/little, Rest/bits >>, Size, BasePtr, Acc) ->
+	parse_pos(Rest, Size, BasePtr, [Pos - BasePtr|Acc]).
+
+parse_strings(_Data, [], Acc) ->
+	lists:reverse(Acc);
+parse_strings(Data, [Pos|Tail], Acc) ->
+	<< _Ignore:Pos/binary, Data2/bits >> = Data,
+	[String|_] = binary:split(Data2, << 0, 0 >>),
+	String2 = binary:replace(String, << $\n, 0 >>, << $~, 0, $n, 0 >>),
+	Padding = case byte_size(String2) rem 2 of 1 -> 8; 0 -> 0 end,
+	parse_strings(Data, Tail, [<< String2/binary, 0:Padding, $\n, 0 >>|Acc]).
