@@ -23,7 +23,9 @@
 start() ->
 	filelib:ensure_dir("out/"),
 	script_server:start_link(),
+	ignore_server:start_link(),
 	parse_zones(),
+	ignore_server:stop(),
 	script_server:save(),
 	script_server:stop().
 
@@ -42,12 +44,21 @@ parse_zone(Filename) ->
 	nbl_cleanup(Filename).
 
 %% @doc Parse the files contained in a zone nbl archive.
+%% @todo Still missing the following files:
+%%       * texlist.xnt
+%%       * ZoneDataTex.xvr
+%%       * EnemyDownload.xnr
+%%       * ActDataDeljaban.xnr
+%%       * ActDataDelpuSulamy.xnr
+%%       * AtkDatDilnazen.xnr
+%%       * DelpuSulamyTutor.bin
+%%       * DilnazenTutor.bin
 parse_zone_files(Out, Dir, NblFilenames) ->
 	parse_zone_files(Out, Dir, NblFilenames, 0).
 parse_zone_files(_Out, _Dir, [], _Ptr) ->
 	ok;
 parse_zone_files(Out, Dir, [Filename = "enemy" ++ _|Tail], Ptr) ->
-	enemy_parser:parse(Out, lists:flatten([Dir|Filename]), Ptr),
+	enemy_parser:parse(Out, lists:flatten([Dir|Filename]), Filename, Ptr),
 	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename]));
 parse_zone_files(Out, Dir, [Filename = "script.bin"|Tail], Ptr) ->
 	ExpFilename = exp_file([Dir|Filename]),
@@ -60,7 +71,10 @@ parse_zone_files(Out, Dir, [Filename = "text.bin"|Tail], Ptr) ->
 	text_parser:parse(Out, lists:flatten([Dir|Filename]), Ptr),
 	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename]));
 parse_zone_files(Out, Dir, [Filename|Tail], Ptr) ->
-	io:format("zone: ignored file ~s from directory ~s~n", [Filename, Dir]),
+	case ignore_server:ignore(Filename) of
+		ok -> io:format("zone: ignored file ~s from directory ~s~n", [Filename, Dir]);
+		already_exists -> ignore
+	end,
 	parse_zone_files(Out, Dir, Tail, Ptr + calc_padded_size([Dir|Filename])).
 
 %% Utility functions.
